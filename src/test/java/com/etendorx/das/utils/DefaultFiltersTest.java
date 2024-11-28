@@ -12,6 +12,15 @@ class DefaultFiltersTest {
     String result = DefaultFilters.addFilters(sql, "100", "0", "admin", true, DefaultFilters.GET_METHOD);
 
     assertEquals(sql, result, "SuperUser should bypass filters");
+
+    // Additional edge case tests
+    String emptySql = "";
+    result = DefaultFilters.addFilters(emptySql, "100", "0", "admin", true, DefaultFilters.GET_METHOD);
+    assertEquals(emptySql, result, "SuperUser should bypass filters even with empty SQL");
+
+    String nullSql = null;
+    result = DefaultFilters.addFilters(nullSql, "100", "0", "admin", true, DefaultFilters.GET_METHOD);
+    assertNull(result, "SuperUser should bypass filters even with null SQL");
   }
 
   @Test

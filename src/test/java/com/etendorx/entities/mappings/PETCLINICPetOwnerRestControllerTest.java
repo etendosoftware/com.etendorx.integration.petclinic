@@ -6,7 +6,6 @@ import com.etendoerp.integration.petclinic.Owner;
 import com.etendorx.das.EtendorxDasApplication;
 import com.etendorx.entities.jparepo.*;
 import com.etendorx.entities.mapper.lib.DASRepository;
-import com.etendorx.utils.auth.key.context.AppContext;
 import com.etendorx.utils.auth.key.context.UserContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
@@ -20,6 +19,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.http.MediaType;
@@ -103,7 +103,6 @@ class PETCLINICPetOwnerRestControllerTest {
   @BeforeEach
   public void deleteAll() {
     petOwnerRepository.deleteAll();
-    // delete all for table
   }
 
   @BeforeEach
@@ -276,7 +275,6 @@ class PETCLINICPetOwnerRestControllerTest {
 
   @Test
   void testPut_ValidRequest_ShouldReturnOk() throws Exception {
-    // Datos de prueba
     String id = "123";
     Map<String, Object> updatedOwner = new HashMap<>();
     updatedOwner.put("firstName", "John Updated");
@@ -296,11 +294,9 @@ class PETCLINICPetOwnerRestControllerTest {
     dtoWrite.setTelephone("9876543210");
     dtoWrite.setCity("Updated City");
 
-    // Mock del convertidor y repositorio
     when(converter.convert(anyString())).thenReturn(dtoWrite);
     when(repository.update(dtoWrite)).thenReturn(new PETCLINICPet_OwnerDTORead());
 
-    // Actuar
     mockMvc.perform(put("/petclinic/Pet_Owner/{id}", id)
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestBody))
@@ -309,7 +305,6 @@ class PETCLINICPetOwnerRestControllerTest {
 
   @Test
   void testPut_InvalidRequest_ShouldReturnBadRequest() throws Exception {
-    // Caso donde el ID es nulo
     String requestBody = "{ \"firstName\": \"Invalid\" }";
 
     mockMvc.perform(put("/petclinic/Pet_Owner/")
@@ -321,7 +316,6 @@ class PETCLINICPetOwnerRestControllerTest {
 
   @Test
   void testPut_UpdateFails_ShouldReturnBadRequest() throws Exception {
-    // Datos de prueba
     String id = "123";
     Map<String, Object> updatedOwner = new HashMap<>();
     updatedOwner.put("firstName", "John Updated");
