@@ -1,0 +1,1 @@
+# com.etendorx.integration.petclinic
