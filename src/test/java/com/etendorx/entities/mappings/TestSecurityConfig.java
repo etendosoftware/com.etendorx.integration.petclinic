@@ -13,6 +13,9 @@ import org.springframework.context.annotation.Primary;
 
 import java.io.IOException;
 
+/**
+ * Test configuration for security context.
+ */
 @TestConfiguration
 public class TestSecurityConfig {
 
@@ -20,6 +23,11 @@ public class TestSecurityConfig {
   public static final String AD_CLIENT_ID = "23C59575B9CF467C9620760EB255B389";
   public static final String AD_ORG_ID = "19404EAD144C49A0AF37D54377CF452D";
 
+  /**
+   * Creates a filter context.
+   *
+   * @return the filter context
+   */
   @Bean
   public FilterContext filterContext() {
     return new FilterContext() {
@@ -32,6 +40,11 @@ public class TestSecurityConfig {
     };
   }
 
+  /**
+   * Sets up the user context.
+   *
+   * @return UserContext the user context
+   */
   @Bean
   @Primary
   public UserContext setupUserContext() {

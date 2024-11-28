@@ -4,7 +4,13 @@ import com.etendoerp.etendorx.data.Connector;
 import com.etendoerp.etendorx.data.InstanceConnector;
 import com.etendoerp.integration.petclinic.Owner;
 import com.etendorx.das.EtendorxDasApplication;
-import com.etendorx.entities.jparepo.*;
+import com.etendorx.entities.jparepo.ADClientRepository;
+import com.etendorx.entities.jparepo.ADUserRepository;
+import com.etendorx.entities.jparepo.ETRX_ConnectorRepository;
+import com.etendorx.entities.jparepo.ETRX_Instance_ConnectorRepository;
+import com.etendorx.entities.jparepo.ETRX_instance_externalidRepository;
+import com.etendorx.entities.jparepo.OrganizationRepository;
+import com.etendorx.entities.jparepo.Pet_OwnerRepository;
 import com.etendorx.entities.mapper.lib.DASRepository;
 import com.etendorx.utils.auth.key.context.UserContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,9 +23,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.http.MediaType;
@@ -30,17 +36,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     properties = {
-        "spring.datasource.url=jdbc:postgresql://localhost:5432/etendo",
-        "spring.datasource.username=tad",
-        "spring.datasource.password=tad",
         "spring.main.allow-bean-definition-overriding=true"
     },
     classes = EtendorxDasApplication.class
@@ -51,6 +60,18 @@ class PETCLINICPetOwnerRestControllerTest {
   public static final String AD_USER_ID = "A530AAE22C864702B7E1C22D58E7B17B";
   public static final String AD_CLIENT_ID = "23C59575B9CF467C9620760EB255B389";
   public static final String AD_ORG_ID = "19404EAD144C49A0AF37D54377CF452D";
+  public static final String FIRST_NAME = "firstName";
+  public static final String LAST_NAME = "lastName";
+  public static final String ADDRESS = "address";
+  public static final String TELEPHONE = "telephone";
+  public static final String CITY = "city";
+
+  @Value("${petclinic.path-owner}")
+  private String pathOwner;
+
+  public String getPathOwnerWithId() {
+    return pathOwner + "/{id}";
+  }
 
   @Autowired
   private MockMvc mockMvc;
@@ -91,20 +112,25 @@ class PETCLINICPetOwnerRestControllerTest {
   @Autowired
   private OrganizationRepository organizationRepository;
 
-
-  private PETCLINICPet_OwnerRestController controller;
-
+  /**
+   * Setup the controller with the mock repository
+   */
   @BeforeEach
   public void setup() {
     MockitoAnnotations.openMocks(this);
-    controller = new PETCLINICPet_OwnerRestController(converter, repository, validator);
   }
 
+  /**
+   * Delete all pet owners before each test
+   */
   @BeforeEach
   public void deleteAll() {
     petOwnerRepository.deleteAll();
   }
 
+  /**
+   * Setup the instance connector for the user context
+   */
   @BeforeEach
   public void setupInstanceConnector() {
 
@@ -139,7 +165,7 @@ class PETCLINICPetOwnerRestControllerTest {
 
   @Test
   @Transactional
-  void testPost_ValidRequest_ShouldReturnCreated() throws Exception {
+  void testPostValidRequestShouldReturnCreated() throws Exception {
 
     log.info("Instance connector id: {}", userContext.getExternalSystemId());
 
@@ -149,20 +175,22 @@ class PETCLINICPetOwnerRestControllerTest {
     pet.put("birthDate", "2021-01-01");
     pet.put("type", "Dog");
 
+    String springfield = "Springfield 123";
+
     Map<String, Object> owner = new HashMap<>();
     owner.put("id", "123");
-    owner.put("firstName", "John");
-    owner.put("lastName", "Doe");
-    owner.put("address", "123 Main St");
-    owner.put("telephone", "1234567890");
-    owner.put("city", "Springfield");
+    owner.put(FIRST_NAME, "John");
+    owner.put(LAST_NAME, "Doe");
+    owner.put(ADDRESS, "124 Main St");
+    owner.put(TELEPHONE, "1234567892");
+    owner.put(CITY, springfield);
     owner.put("pets", List.of(pet));
 
     ObjectMapper mapper = new ObjectMapper();
 
     when(converter.convert(anyString())).thenReturn(new PETCLINICPet_OwnerDTOWrite());
 
-    ResultActions result = mockMvc.perform(post("/petclinic/Pet_Owner")
+    ResultActions result = mockMvc.perform(post(pathOwner)
         .contentType(MediaType.APPLICATION_JSON)
         .content(mapper.writeValueAsString(owner)));
 
@@ -173,53 +201,52 @@ class PETCLINICPetOwnerRestControllerTest {
     // Lookup owner by name and compare with example
     for (Owner o : owners) {
       if (o.getFirstName().equals("John") && o.getLastName().equals("Doe")) {
-        assert(o.getFirstName().equals("John"));
-        assert(o.getLastName().equals("Doe"));
-        assert(o.getAddress().equals("123 Main St"));
-        assert(o.getTelephone().equals("1234567890"));
-        assert(o.getCity().equals("Springfield"));
+        assert(o.getAddress().equals("124 Main St"));
+        assert(o.getTelephone().equals("1234567892"));
+        assert(o.getCity().equals(springfield));
         assert o.getPetPetList().size() == 1;
         assert o.getPetPetList().get(0).getName().equals("Fido");
-
       }
     }
 
   }
 
   @Test
-  void testPost_InvalidRequest_ShouldReturnBadRequest() throws Exception {
+  void testPostInvalidRequestShouldReturnBadRequest() throws Exception {
     String invalidRequestBody = "{ invalid json }";
 
-    mockMvc.perform(post("/petclinic/Pet_Owner")
+    mockMvc.perform(post(pathOwner)
             .contentType(MediaType.APPLICATION_JSON)
             .content(invalidRequestBody))
         .andExpect(status().isBadRequest());
   }
 
   @Test
-  void testPost_InvalidRequest_ShouldReturnBadRequestNull() throws Exception {
+  void testPostInvalidRequestShouldReturnBadRequestNull() throws Exception {
 
-    mockMvc.perform(post("/petclinic/Pet_Owner")
+    mockMvc.perform(post(pathOwner)
             .contentType(MediaType.APPLICATION_JSON)
             .content(""))
         .andExpect(status().isBadRequest());
   }
 
   @Test
-  void testGet_ValidId_ShouldReturnOk() throws Exception {
+  void testGetValidIdShouldReturnOk() throws Exception {
+    String springfield = "Springfield 456";
+
     Map<String, Object> owner = new HashMap<>();
     owner.put("id", "123");
-    owner.put("firstName", "John");
-    owner.put("lastName", "Doe");
-    owner.put("address", "123 Main St");
-    owner.put("telephone", "1234567890");
-    owner.put("city", "Springfield");
+    owner.put(FIRST_NAME, "John");
+    owner.put(LAST_NAME, "Doe");
+    owner.put(ADDRESS, "123 Main St");
+    owner.put(TELEPHONE, "1234567890");
+    owner.put(CITY, springfield);
 
     ObjectMapper mapper = new ObjectMapper();
 
     when(converter.convert(anyString())).thenReturn(new PETCLINICPet_OwnerDTOWrite());
 
-    ResultActions result = mockMvc.perform(post("/petclinic/Pet_Owner")
+    ResultActions result = mockMvc.perform(post(pathOwner)
         .contentType(MediaType.APPLICATION_JSON)
         .content(mapper.writeValueAsString(owner)));
 
@@ -229,36 +256,38 @@ class PETCLINICPetOwnerRestControllerTest {
     PETCLINICPet_OwnerDTORead dto = new PETCLINICPet_OwnerDTORead();
     when(repository.findById(id)).thenReturn(dto);
 
-    mockMvc.perform(get("/petclinic/Pet_Owner/{id}", id))
+    mockMvc.perform(get(getPathOwnerWithId(), id))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.firstName").value("John"));
   }
 
   @Test
-  void testGet_InvalidId_ShouldReturnNotFound() throws Exception {
+  void testGetInvalidIdShouldReturnNotFound() throws Exception {
     String id = "999";
     when(repository.findById(id)).thenReturn(null);
 
-    mockMvc.perform(get("/petclinic/Pet_Owner/{id}", id))
+    mockMvc.perform(get(getPathOwnerWithId(), id))
         .andExpect(status().isNotFound());
   }
 
   @Test
-  void testGet_ValidArray_ShouldReturnOk() throws Exception {
+  void testGetValidArrayShouldReturnOk() throws Exception {
+    String springfield = "Springfield 567";
+
     Map<String, Object> owner = new HashMap<>();
     owner.put("id", "123");
-    owner.put("firstName", "John");
-    owner.put("lastName", "Doe");
-    owner.put("address", "123 Main St");
-    owner.put("telephone", "1234567890");
-    owner.put("city", "Springfield");
+    owner.put(FIRST_NAME, "John");
+    owner.put(LAST_NAME, "Doe");
+    owner.put(ADDRESS, "123 Main St");
+    owner.put(TELEPHONE, "1234567890");
+    owner.put(CITY, springfield);
 
     List<Map<String, Object>> owners = List.of(owner);
     ObjectMapper mapper = new ObjectMapper();
 
     when(converter.convert(anyString())).thenReturn(new PETCLINICPet_OwnerDTOWrite());
 
-    ResultActions result = mockMvc.perform(post("/petclinic/Pet_Owner")
+    ResultActions result = mockMvc.perform(post(pathOwner)
         .contentType(MediaType.APPLICATION_JSON)
         .content(mapper.writeValueAsString(owners)));
 
@@ -268,46 +297,52 @@ class PETCLINICPetOwnerRestControllerTest {
     PETCLINICPet_OwnerDTORead dto = new PETCLINICPet_OwnerDTORead();
     when(repository.findById(id)).thenReturn(dto);
 
-    mockMvc.perform(get("/petclinic/Pet_Owner/{id}", id))
+    mockMvc.perform(get(getPathOwnerWithId(), id))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.firstName").value("John"));
   }
 
   @Test
-  void testPut_ValidRequest_ShouldReturnOk() throws Exception {
+  void testPutValidRequestShouldReturnOk() throws Exception {
     String id = "123";
     Map<String, Object> updatedOwner = new HashMap<>();
-    updatedOwner.put("firstName", "John Updated");
-    updatedOwner.put("lastName", "Doe Updated");
-    updatedOwner.put("address", "456 Updated St");
-    updatedOwner.put("telephone", "9876543210");
-    updatedOwner.put("city", "Updated City");
+    String johnUpdated = "John Updated";
+    String doeUpdated = "Doe Updated";
+    String address = "456 Updated St";
+    String telephone = "9876543210";
+    String updatedCity = "Updated City";
+
+    updatedOwner.put(FIRST_NAME, johnUpdated);
+    updatedOwner.put(LAST_NAME, doeUpdated);
+    updatedOwner.put(ADDRESS, address);
+    updatedOwner.put(TELEPHONE, telephone);
+    updatedOwner.put(CITY, updatedCity);
 
     ObjectMapper mapper = new ObjectMapper();
     String requestBody = mapper.writeValueAsString(updatedOwner);
 
     PETCLINICPet_OwnerDTOWrite dtoWrite = new PETCLINICPet_OwnerDTOWrite();
     dtoWrite.setId(id);
-    dtoWrite.setFirstName("John Updated");
-    dtoWrite.setLastName("Doe Updated");
-    dtoWrite.setAddress("456 Updated St");
-    dtoWrite.setTelephone("9876543210");
-    dtoWrite.setCity("Updated City");
+    dtoWrite.setFirstName(johnUpdated);
+    dtoWrite.setLastName(doeUpdated);
+    dtoWrite.setAddress(address);
+    dtoWrite.setTelephone(telephone);
+    dtoWrite.setCity(updatedCity);
 
     when(converter.convert(anyString())).thenReturn(dtoWrite);
     when(repository.update(dtoWrite)).thenReturn(new PETCLINICPet_OwnerDTORead());
 
-    mockMvc.perform(put("/petclinic/Pet_Owner/{id}", id)
+    mockMvc.perform(put(getPathOwnerWithId(), id)
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestBody))
         .andExpect(status().isCreated());
   }
 
   @Test
-  void testPut_InvalidRequest_ShouldReturnBadRequest() throws Exception {
+  void testPutInvalidRequestShouldReturnBadRequest() throws Exception {
     String requestBody = "{ \"firstName\": \"Invalid\" }";
 
-    mockMvc.perform(put("/petclinic/Pet_Owner/")
+    mockMvc.perform(put(pathOwner + "/")
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestBody))
         .andExpect(status().isNotFound())
@@ -315,21 +350,21 @@ class PETCLINICPetOwnerRestControllerTest {
   }
 
   @Test
-  void testPut_UpdateFails_ShouldReturnBadRequest() throws Exception {
+  void testPutUpdateFailsShouldReturnBadRequest() throws Exception {
     String id = "123";
     Map<String, Object> updatedOwner = new HashMap<>();
-    updatedOwner.put("firstName", "John Updated");
-    updatedOwner.put("lastName", "Doe Updated");
-    updatedOwner.put("address", "456 Updated St");
-    updatedOwner.put("telephone", null);
-    updatedOwner.put("city", "Updated City");
+    updatedOwner.put(FIRST_NAME, "John Updated");
+    updatedOwner.put(LAST_NAME, "Doe Updated");
+    updatedOwner.put(ADDRESS, "456 Updated St");
+    updatedOwner.put(TELEPHONE, null);
+    updatedOwner.put(CITY, "Updated City");
 
     ObjectMapper mapper = new ObjectMapper();
     String requestBody = mapper.writeValueAsString(updatedOwner);
 
     when(converter.convert(anyString())).thenThrow(new RuntimeException("Conversion error"));
 
-    mockMvc.perform(put("/petclinic/Pet_Owner/{id}", id)
+    mockMvc.perform(put(getPathOwnerWithId(), id)
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestBody))
         .andExpect(status().isBadRequest())

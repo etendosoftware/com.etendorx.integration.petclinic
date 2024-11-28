@@ -22,6 +22,11 @@ import static org.mockito.Mockito.when;
 
 class OBCONFieldMappingTest {
 
+  public static final String TABLE_ID = "TABLE_ID";
+  public static final String FIELD_2 = "field2";
+  public static final String TEST_ENTITY = "TestEntity";
+  public static final String RESULT_SHOULD_NOT_BE_NULL = "Result should not be null";
+  public static final String RESULT_SHOULD_BE_A_LIST = "Result should be a list";
   @Mock
   private MetadataUtil metadataUtil;
 
@@ -34,11 +39,11 @@ class OBCONFieldMappingTest {
   }
 
   @Test
-  void testMap_ValidEntity_ShouldReturnCorrectFieldMapping() {
+  void testMapValidEntityShouldReturnCorrectFieldMapping() {
     // Mock TableEntity
     Table tableEntity = new Table();
-    tableEntity.setId("TABLE_ID");
-    tableEntity.setName("TestEntity");
+    tableEntity.setId(TABLE_ID);
+    tableEntity.setName(TEST_ENTITY);
 
     // Mock ProjectionEntity
     ETRXProjectionEntity projectionEntity = mock(ETRXProjectionEntity.class);
@@ -56,16 +61,16 @@ class OBCONFieldMappingTest {
     field1.setEtrxProjectionEntity(projectionEntity);
 
     ETRXEntityField field2 = new ETRXEntityField();
-    field2.setName("field2");
+    field2.setName(FIELD_2);
     field2.setJsonpath("$.field2");
     field2.setFieldMapping("mapping2");
     field2.setProperty("relatedEntity.field2");
     field2.setEtrxProjectionEntity(projectionEntity);
 
     // Mock MetadataUtil for field2
-    FieldMetadata fieldMetadata = new FieldMetadata("String", "field2", "RELATED_TABLE_ID",
+    FieldMetadata fieldMetadata = new FieldMetadata("String", FIELD_2, "RELATED_TABLE_ID",
         "RELATED_TABLE_REL_ID", false, "RelatedEntity");
-    when(metadataUtil.getPropertyMetadata("TABLE_ID", "relatedEntity")).thenReturn(fieldMetadata);
+    when(metadataUtil.getPropertyMetadata(TABLE_ID, "relatedEntity")).thenReturn(fieldMetadata);
 
     // Mock InstanceConnectorMapping
     InstanceConnectorMapping instanceConnectorMapping = mock(InstanceConnectorMapping.class);
@@ -79,8 +84,8 @@ class OBCONFieldMappingTest {
     Object result = fieldMapping.map(instanceConnectorMapping);
 
     // Assert
-    assertNotNull(result, "Result should not be null");
-    assertInstanceOf(List.class, result, "Result should be a list");
+    assertNotNull(result, RESULT_SHOULD_NOT_BE_NULL);
+    assertInstanceOf(List.class, result, RESULT_SHOULD_BE_A_LIST);
 
     List<Map<String, Object>> fieldMappingList = (List<Map<String, Object>>) result;
     assertEquals(2, fieldMappingList.size(), "Field mapping list should contain 2 entries");
@@ -94,7 +99,7 @@ class OBCONFieldMappingTest {
 
     // Validate field2
     Map<String, Object> field2Map = fieldMappingList.get(1);
-    assertEquals("field2", field2Map.get("name"));
+    assertEquals(FIELD_2, field2Map.get("name"));
     assertEquals("$.field2", field2Map.get("jsonpath"));
     assertEquals("mapping2", field2Map.get("fieldMapping"));
     assertTrue((Boolean) field2Map.get("isExternalIdentifier"));
@@ -103,11 +108,11 @@ class OBCONFieldMappingTest {
   }
 
   @Test
-  void testMap_EmptyEntity_ShouldReturnEmptyList() {
+  void testMapEmptyEntityShouldReturnEmptyList() {
     // Mock TableEntity
     Table tableEntity = new Table();
-    tableEntity.setId("TABLE_ID");
-    tableEntity.setName("TestEntity");
+    tableEntity.setId(TABLE_ID);
+    tableEntity.setName(TEST_ENTITY);
 
     // Mock ProjectionEntity
     ETRXProjectionEntity projectionEntity = mock(ETRXProjectionEntity.class);
@@ -126,17 +131,17 @@ class OBCONFieldMappingTest {
     Object result = fieldMapping.map(instanceConnectorMapping);
 
     // Assert
-    assertNotNull(result, "Result should not be null");
-    assertTrue(result instanceof List, "Result should be a list");
+    assertNotNull(result, RESULT_SHOULD_NOT_BE_NULL);
+    assertTrue(result instanceof List, RESULT_SHOULD_BE_A_LIST);
     assertTrue(((List<?>) result).isEmpty(), "Result list should be empty");
   }
 
   @Test
-  void testMap_NullMetadata_ShouldHandleGracefully() {
+  void testMapNullMetadataShouldHandleGracefully() {
     // Mock TableEntity
     Table tableEntity = new Table();
-    tableEntity.setId("TABLE_ID");
-    tableEntity.setName("TestEntity");
+    tableEntity.setId(TABLE_ID);
+    tableEntity.setName(TEST_ENTITY);
 
     // Mock ProjectionEntity
     ETRXProjectionEntity projectionEntity = mock(ETRXProjectionEntity.class);
@@ -155,7 +160,7 @@ class OBCONFieldMappingTest {
     field.setEtrxProjectionEntity(projectionEntity);
 
     // Mock MetadataUtil to return null
-    when(metadataUtil.getPropertyMetadata("TABLE_ID", "relatedEntity")).thenReturn(null);
+    when(metadataUtil.getPropertyMetadata(TABLE_ID, "relatedEntity")).thenReturn(null);
 
     // Mock InstanceConnectorMapping
     InstanceConnectorMapping instanceConnectorMapping = mock(InstanceConnectorMapping.class);
@@ -168,8 +173,8 @@ class OBCONFieldMappingTest {
     Object result = fieldMapping.map(instanceConnectorMapping);
 
     // Assert
-    assertNotNull(result, "Result should not be null");
-    assertInstanceOf(List.class, result, "Result should be a list");
+    assertNotNull(result, RESULT_SHOULD_NOT_BE_NULL);
+    assertInstanceOf(List.class, result, RESULT_SHOULD_BE_A_LIST);
     assertEquals(1, ((List<?>) result).size(), "Field mapping list should contain 1 entry");
   }
 }

@@ -7,7 +7,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class Pet_Owner_Metadata_Test {
+class PetOwnerMetadataTest {
 
   private Pet_Owner_Metadata_ metadata;
 
