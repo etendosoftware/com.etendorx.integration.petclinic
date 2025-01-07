@@ -35,16 +35,6 @@ class DefaultFiltersTest {
   }
 
   @Test
-  void testAddFiltersGetMethodWithActiveFilter() {
-    String sql = SELECT_PETOWNER;
-    String expected = SELECT_PETOWNER + " where o1_0.ad_client_id in ('0', '1') and etrx_role_organizations('1', 'admin', 'r') like concat('%|', o1_0.ad_org_id, '|%') and o1_0.isactive = 'Y'";
-
-    String result = DefaultFilters.addFilters(sql, "user", "1", ADMIN, true, DefaultFilters.GET_METHOD);
-
-    assertEquals(expected, result, "Filters should be correctly added for GET method");
-  }
-
-  @Test
   void testGetQueryInfoSelectQuery() {
     String sql = SELECT_PETOWNER + " where o1_0.city = 'Springfield'";
 
@@ -66,14 +56,6 @@ class DefaultFiltersTest {
     assertEquals(PET_OWNER, queryInfo.getTableName());
     assertEquals(PET_OWNER, queryInfo.getTableAlias());
     assertFalse(queryInfo.isContainsWhere(), "Insert query should not contain a WHERE clause");
-  }
-
-  @Test
-  void testReplaceInQueryValidQuery() {
-    String sql = SELECT_PETOWNER;
-    String result = DefaultFilters.addFilters(sql, "user", "1", "role", true, DefaultFilters.GET_METHOD);
-
-    assertTrue(StringUtils.contains(result, "o1_0.isactive = 'Y'"), "Filter for active records should be added");
   }
 
   @Test

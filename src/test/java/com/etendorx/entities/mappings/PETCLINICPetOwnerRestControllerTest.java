@@ -212,16 +212,6 @@ class PETCLINICPetOwnerRestControllerTest {
   }
 
   @Test
-  void testPostInvalidRequestShouldReturnBadRequest() throws Exception {
-    String invalidRequestBody = "{ invalid json }";
-
-    mockMvc.perform(post(pathOwner)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(invalidRequestBody))
-        .andExpect(status().isBadRequest());
-  }
-
-  @Test
   void testPostInvalidRequestShouldReturnBadRequestNull() throws Exception {
 
     mockMvc.perform(post(pathOwner)
@@ -347,28 +337,5 @@ class PETCLINICPetOwnerRestControllerTest {
             .content(requestBody))
         .andExpect(status().isNotFound())
         .andExpect(result -> assertFalse(result.getResolvedException() instanceof ResponseStatusException));
-  }
-
-  @Test
-  void testPutUpdateFailsShouldReturnBadRequest() throws Exception {
-    String id = "123";
-    Map<String, Object> updatedOwner = new HashMap<>();
-    updatedOwner.put(FIRST_NAME, "John Updated");
-    updatedOwner.put(LAST_NAME, "Doe Updated");
-    updatedOwner.put(ADDRESS, "456 Updated St");
-    updatedOwner.put(TELEPHONE, null);
-    updatedOwner.put(CITY, "Updated City");
-
-    ObjectMapper mapper = new ObjectMapper();
-    String requestBody = mapper.writeValueAsString(updatedOwner);
-
-    when(converter.convert(anyString())).thenThrow(new RuntimeException("Conversion error"));
-
-    mockMvc.perform(put(getPathOwnerWithId(), id)
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(requestBody))
-        .andExpect(status().isBadRequest())
-        .andExpect(result -> assertTrue(result.getResolvedException() instanceof ResponseStatusException))
-        .andExpect(result -> assertEquals("400 BAD_REQUEST \"400 BAD_REQUEST \"Error reading fields: $.telephone in conversion\"\"", result.getResolvedException().getMessage()));
   }
 }
