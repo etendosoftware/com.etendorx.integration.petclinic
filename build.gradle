@@ -51,6 +51,8 @@ dependencies {
     }
     // Swagger
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
+
+    implementation 'com.github.jsqlparser:jsqlparser:5.1'
 }
 
 tasks.named('test') {

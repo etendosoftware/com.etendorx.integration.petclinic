@@ -1,6 +1,6 @@
 package com.etendorx.das.utils;
 
-import org.apache.commons.lang3.StringUtils;
+import org.hibernate.QueryException;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -8,6 +8,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.statement.Statement;
 
 class DefaultFiltersTest {
 
@@ -37,25 +41,33 @@ class DefaultFiltersTest {
   @Test
   void testGetQueryInfoSelectQuery() {
     String sql = SELECT_PETOWNER + " where o1_0.city = 'Springfield'";
+    try {
+      Statement statement = CCJSqlParserUtil.parse(sql);
+      DefaultFilters.QueryInfo queryInfo = DefaultFilters.getQueryInfo(statement);
 
-    DefaultFilters.QueryInfo queryInfo = DefaultFilters.getQueryInfo(sql);
-
-    assertEquals("select", queryInfo.getSqlAction());
-    assertEquals(PET_OWNER, queryInfo.getTableName());
-    assertEquals("o1_0", queryInfo.getTableAlias());
-    assertTrue(queryInfo.isContainsWhere(), "Query should contain a WHERE clause");
+      assertEquals("select", queryInfo.getSqlAction());
+      assertEquals(PET_OWNER, queryInfo.getTableName());
+      assertEquals("o1_0", queryInfo.getTableAlias());
+      assertTrue(queryInfo.isContainsWhere(), "Query should contain a WHERE clause");
+    } catch (JSQLParserException e) {
+      throw new QueryException("testGetQueryInfoSelectQuery ERROR");
+    }
   }
 
   @Test
   void testGetQueryInfoInsertQuery() {
     String sql = "insert into pet_owner (id, name) values (1, 'John')";
+    try {
+      Statement statement = CCJSqlParserUtil.parse(sql);
+      DefaultFilters.QueryInfo queryInfo = DefaultFilters.getQueryInfo(statement);
 
-    DefaultFilters.QueryInfo queryInfo = DefaultFilters.getQueryInfo(sql);
-
-    assertEquals("insert into", queryInfo.getSqlAction());
-    assertEquals(PET_OWNER, queryInfo.getTableName());
-    assertEquals(PET_OWNER, queryInfo.getTableAlias());
-    assertFalse(queryInfo.isContainsWhere(), "Insert query should not contain a WHERE clause");
+      assertEquals("insert into", queryInfo.getSqlAction());
+      assertEquals(PET_OWNER, queryInfo.getTableName());
+      assertEquals(PET_OWNER, queryInfo.getTableAlias());
+      assertFalse(queryInfo.isContainsWhere(), "Insert query should not contain a WHERE clause");
+    } catch (JSQLParserException e) {
+      throw new QueryException("testGetQueryInfoSelectQuery ERROR");
+    }
   }
 
   @Test
