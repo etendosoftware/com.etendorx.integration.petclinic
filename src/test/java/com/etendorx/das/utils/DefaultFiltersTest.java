@@ -63,7 +63,7 @@ class DefaultFiltersTest {
 
       assertEquals("INSERT INTO", queryInfo.getSqlAction());
       assertEquals(PET_OWNER, queryInfo.getTableName());
-      assertEquals(PET_OWNER, null);
+      assertEquals(null, queryInfo.getTableAlias());
       assertFalse(queryInfo.isContainsWhere(), "Insert query should not contain a WHERE clause");
     } catch (JSQLParserException e) {
       throw new QueryException("testGetQueryInfoSelectQuery ERROR");
