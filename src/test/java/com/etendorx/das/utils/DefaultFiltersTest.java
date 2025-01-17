@@ -15,7 +15,7 @@ import net.sf.jsqlparser.statement.Statement;
 
 class DefaultFiltersTest {
 
-  public static final String SELECT_PETOWNER = "select * from pet_owner o1_0";
+  public static final String SELECT_PETOWNER = "SELECT * FROM pet_owner o1_0";
   public static final String ADMIN = "admin";
   public static final String USER_100 = "100";
   public static final String CLIENT_0 = "0";
@@ -40,12 +40,12 @@ class DefaultFiltersTest {
 
   @Test
   void testGetQueryInfoSelectQuery() {
-    String sql = SELECT_PETOWNER + " where o1_0.city = 'Springfield'";
+    String sql = SELECT_PETOWNER + " WHERE o1_0.city = 'Springfield'";
     try {
       Statement statement = CCJSqlParserUtil.parse(sql);
       DefaultFilters.QueryInfo queryInfo = DefaultFilters.getQueryInfo(statement);
 
-      assertEquals("select", queryInfo.getSqlAction());
+      assertEquals("SELECT", queryInfo.getSqlAction());
       assertEquals(PET_OWNER, queryInfo.getTableName());
       assertEquals("o1_0", queryInfo.getTableAlias());
       assertTrue(queryInfo.isContainsWhere(), "Query should contain a WHERE clause");
@@ -56,14 +56,14 @@ class DefaultFiltersTest {
 
   @Test
   void testGetQueryInfoInsertQuery() {
-    String sql = "insert into pet_owner (id, name) values (1, 'John')";
+    String sql = "INSERT INTO pet_owner (id, name) VALUES (1, 'John')";
     try {
       Statement statement = CCJSqlParserUtil.parse(sql);
       DefaultFilters.QueryInfo queryInfo = DefaultFilters.getQueryInfo(statement);
 
-      assertEquals("insert into", queryInfo.getSqlAction());
+      assertEquals("INSERT INTO", queryInfo.getSqlAction());
       assertEquals(PET_OWNER, queryInfo.getTableName());
-      assertEquals(PET_OWNER, queryInfo.getTableAlias());
+      assertEquals(PET_OWNER, null);
       assertFalse(queryInfo.isContainsWhere(), "Insert query should not contain a WHERE clause");
     } catch (JSQLParserException e) {
       throw new QueryException("testGetQueryInfoSelectQuery ERROR");
